@@ -16,7 +16,7 @@ jobs:
           python-version: "3.x"
       - name: Install test dependencies
         run: |
-          pip install pytest-cov
+          pip install okpy pytest-cov
       - name: Install oktools
         run: |
           pip install flit
