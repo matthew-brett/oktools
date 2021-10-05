@@ -9,3 +9,15 @@ Requires:
 
 See the [rmdex README](https://github.com/matthew-brett/rmdex) for
 documentation of the markup for the exercises.
+
+Example command to check exercise build and test:
+
+```
+okt-dir2exercise --site-config=$HOME/dev_trees/cfd2021/_course.yml .
+```
+
+Then, when satisfied:
+
+```
+okt-dir2exercise --site-config=$HOME/dev_trees/cfd2021/_course.yml . --push
+```
