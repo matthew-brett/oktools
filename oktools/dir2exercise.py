@@ -11,46 +11,59 @@ On Mac:
 import os
 import os.path as op
 import shutil
+import re
 from argparse import ArgumentParser
-from subprocess import check_call, check_output
+from functools import partial
+from subprocess import check_call, check_output, run, PIPE
 
 
 from .cutils import (cd, proc_config, build_url, check_repo, process_dir,
                      write_exercise_ipynb, grade_path, write_dir)
 
 
-def strip_repo_at(path):
-    with cd(path):
-        origin_url = check_output(
-            ['git', 'remote', 'get-url', 'origin'], text=True).strip()
-        if len(origin_url) == 0:
-            raise RuntimeError('Could not find origin URL')
-        shutil.rmtree('.git')
-        check_call(['git', 'init'])
-        check_call(['git', 'remote', 'add', 'origin', origin_url])
-
-
 def push_dir(path, site_dict, strip=False):
     with cd(path):
-        ex_name = op.basename(path)
-        has_history = op.isdir('.git')
-        if has_history:
-            if strip:
-                strip_repo_at('.')
-        else:  # No history
-            check_call(['git', 'init'])
-            check_call(['hub', 'create',
-                        f"{site_dict['org_name']}/{ex_name}"])
-        check_call(['git', 'add', '.'])
-        if len(check_output(['git', 'diff', '--staged'])) == 0:
-            print('No changes to commit')
-            return
-        check_call(['git', 'commit', '-m', 'Update from template'])
-        # Check default branch.
-        res = check_output(['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
-                           text=True).strip()
-        check_call(['git', 'push', 'origin', res] +
-                   (['--force'] if strip else []))
+        do_push_dir(site_dict, strip)
+
+
+quiet_run = partial(run, stdout=PIPE, stderr=PIPE, text=True)
+
+
+def get_default_branch(gh_url):
+    out = check_output(['git', 'remote', 'show', gh_url], text=True)
+    return re.search('HEAD branch: (.*)', out, re.M).groups()[0]
+
+
+def do_push_dir(site_dict, strip=False):
+    ex_name = op.basename(os.getcwd())
+    gh_path = f"{site_dict['org_name']}/{ex_name}"
+    gh_url = f"https://github.com/{gh_path}"
+    repo_exists = run(['git', 'ls-remote', gh_url],
+                      stdout=PIPE, stderr=PIPE).returncode == 0
+    if strip and op.isdir('.git'):
+        shutil.rmtree('.git')
+    if not op.isdir('.git'):
+        quiet_run(['git', 'init'], check=True)
+    if repo_exists:
+        quiet_run(['git', 'remote', 'remove', 'origin'])
+        quiet_run(['git', 'remote', 'add', 'origin', gh_url],
+                  check=True)
+        if not strip:
+            quiet_run(['git', 'fetch', 'origin'], check=True)
+    else:  # Repo does not exist, create it.
+        quiet_run(['hub', 'create', gh_path], check=True)
+    # We now have an origin, and we can get the default branch.
+    branch = get_default_branch(gh_url)
+    check_call(['git', 'checkout', '-B', branch])
+    if not strip:
+        quiet_run(['git', 'reset', '--soft', f'origin/{branch}'], check=True)
+    check_call(['git', 'add', '.'])
+    if len(check_output(['git', 'diff', '--staged'])) == 0:
+        print('No changes to commit')
+        return
+    check_call(['git', 'commit', '-m', 'Update from template'])
+    check_call(['git', 'push', 'origin', branch] +
+                (['--force'] if strip else []))
 
 
 def main():
