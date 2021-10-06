@@ -21,9 +21,9 @@ from .cutils import (cd, proc_config, build_url, check_repo, process_dir,
                      write_exercise_ipynb, grade_path, write_dir)
 
 
-def push_dir(path, site_dict, strip=False):
+def push_dir(path, site_dict, strip=False, force=False):
     with cd(path):
-        do_push_dir(site_dict, strip)
+        do_push_dir(site_dict, strip, force)
 
 
 quiet_run = partial(run, stdout=PIPE, stderr=PIPE, text=True)
@@ -34,10 +34,11 @@ def get_default_branch(gh_url):
     return re.search('HEAD branch: (.*)', out, re.M).groups()[0]
 
 
-def do_push_dir(site_dict, strip=False):
+def do_push_dir(site_dict, strip=False, force=False):
     ex_name = op.basename(os.getcwd())
+    gh_root = site_dict['git_root']
     gh_path = f"{site_dict['org_name']}/{ex_name}"
-    gh_url = f"https://github.com/{gh_path}"
+    gh_url = f"{gh_root}/{gh_path}"
     repo_exists = run(['git', 'ls-remote', gh_url],
                       stdout=PIPE, stderr=PIPE).returncode == 0
     if strip and op.isdir('.git'):
@@ -63,7 +64,7 @@ def do_push_dir(site_dict, strip=False):
         return
     check_call(['git', 'commit', '-m', 'Update from template'])
     check_call(['git', 'push', 'origin', branch] +
-                (['--force'] if strip else []))
+                (['--force'] if (strip or force) else []))
 
 
 def main():
@@ -83,6 +84,8 @@ def main():
                         help='If specified, push exercise to remote')
     parser.add_argument('--strip', action='store_true',
                         help='If specified, strip exercise history')
+    parser.add_argument('--force', action='store_true',
+                        help='If specified, force push exercise repository')
     parser.add_argument('--no-clean', action='store_true',
                         help='If specified, do not delete existing exercise '
                              'files in output directory')
@@ -107,8 +110,9 @@ def main():
     write_dir(args.dir, out_path, clean=not args.no_clean,
               exclude_exts=() if args.rmd else ('.Rmd',))
     if args.push:
-        push_dir(out_path, site_dict, args.strip)
-    print(build_url(out_path, site_dict))
+        push_dir(out_path, site_dict, args.strip, args.force)
+    if site_dict.get('jh_root'):
+        print(build_url(out_path, site_dict))
 
 
 if __name__ == '__main__':
