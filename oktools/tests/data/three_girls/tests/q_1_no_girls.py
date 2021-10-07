@@ -24,12 +24,12 @@ test = {
           'locked': False
         },
         {
-          # n = 10000
           # # Take 10000 samples of 10000 trials of this problem.
+          # n = 10000
           # res = np.sum(np.random.binomial(4, 0.5, (n, n)) == 0, axis=1) / n
-          # np.quantile(res, [0.001, 0.999])
+          # print(np.min(res), np.max(res))
           'code': r"""
-          >>> 0.055 < p_no_girls < 0.071
+          >>> 0.051 < p_no_girls < 0.072
           True
           """,
           'hidden': False,
