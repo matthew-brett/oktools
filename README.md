@@ -10,7 +10,7 @@ Requires:
 See the [rmdex README](https://github.com/matthew-brett/rmdex) for
 documentation of the markup for the exercises.
 
-You needs configuration file in YaML format.  Here is an example:
+The tools need a configuration file in YaML format.  Here is an example:
 
 ```yaml
 # Configuration for cfd2021 exercise builds
