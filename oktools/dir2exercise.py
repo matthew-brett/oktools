@@ -26,12 +26,13 @@ def push_dir(path, site_dict, strip=False, force=False):
         do_push_dir(site_dict, strip, force)
 
 
-quiet_run = partial(run, stdout=PIPE, stderr=PIPE, text=True)
+quiet_run = partial(run, stdout=PIPE, text=True)
 
 
 def get_default_branch(gh_url):
     out = check_output(['git', 'remote', 'show', gh_url], text=True)
-    return re.search('HEAD branch: (.*)', out, re.M).groups()[0]
+    branch = re.search('HEAD branch: (.*)', out, re.M).groups()[0]
+    return None if branch == '(unknown)' else branch
 
 
 def do_push_dir(site_dict, strip=False, force=False):
@@ -54,16 +55,19 @@ def do_push_dir(site_dict, strip=False, force=False):
     else:  # Repo does not exist, create it.
         quiet_run(['hub', 'create', gh_path], check=True)
     # We now have an origin, and we can get the default branch.
-    branch = get_default_branch(gh_url)
-    check_call(['git', 'checkout', '-B', branch])
-    if not strip:
-        quiet_run(['git', 'reset', '--soft', f'origin/{branch}'], check=True)
+    gh_branch = get_default_branch(gh_url)
+    local_branch = 'main' if gh_branch is None else gh_branch
+    check_call(['git', 'checkout', '-B', local_branch])
+    if not strip and gh_branch:
+        quiet_run(
+            ['git', 'reset', '--soft', f'origin/{gh_branch}'],
+            check=True)
     check_call(['git', 'add', '.'])
     if len(check_output(['git', 'diff', '--staged'])) == 0:
         print('No changes to commit')
         return
     check_call(['git', 'commit', '-m', 'Update from template'])
-    check_call(['git', 'push', 'origin', branch] +
+    check_call(['git', 'push', 'origin', local_branch] +
                 (['--force'] if (strip or force) else []))
 
 

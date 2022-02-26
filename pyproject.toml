@@ -20,3 +20,5 @@ requires-python=">=3.6"
 
 [tool.flit.scripts]
 okt-dir2exercise = "oktools.dir2exercise:main"
+okt-mkdir = "oktools.makedir:main"
+okt-mkq = "oktools.makeq:main"
