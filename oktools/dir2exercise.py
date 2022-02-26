@@ -35,6 +35,15 @@ def get_default_branch(gh_url):
     return None if branch == '(unknown)' else branch
 
 
+def check_hub():
+    if shutil.which('hub') is not None:
+        return
+    raise RuntimeError(
+        '"hub" binary is not on the PATH. '
+        'See https://github.com/github/hub#installation '
+        'for instructions')
+
+
 def do_push_dir(site_dict, strip=False, force=False):
     ex_name = op.basename(os.getcwd())
     gh_root = site_dict['git_root']
@@ -53,6 +62,7 @@ def do_push_dir(site_dict, strip=False, force=False):
         if not strip:
             quiet_run(['git', 'fetch', 'origin'], check=True)
     else:  # Repo does not exist, create it.
+        check_hub()
         quiet_run(['hub', 'create', gh_path], check=True)
     # We now have an origin, and we can get the default branch.
     gh_branch = get_default_branch(gh_url)
