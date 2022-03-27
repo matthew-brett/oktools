@@ -262,10 +262,6 @@ def process_dir(path, site_dict=None):
     clear_directory_for(fnames['exercise'])
 
 
-def write_exercise_ipynb(path, execute=False):
-    return write_ipynb(path, nb_type='exercise', execute=execute)
-
-
 def write_ipynb(path, nb_type, execute=False):
     fnames = get_exercise_fnames(path)
     out_fname = ipynb_fname(fnames[nb_type])
