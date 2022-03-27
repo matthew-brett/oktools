@@ -9,6 +9,7 @@ import shutil
 import re
 import urllib.parse
 from contextlib import contextmanager
+from functools import partial
 from subprocess import check_output
 
 import yaml
@@ -147,7 +148,7 @@ def clear_directory_for(fname):
         shutil.rmtree(pycache)
 
 
-def good_fname(fname, exclude_exts=()):
+def good_fname(fname, exclude_exts=(), with_solution=False):
     fn = op.basename(fname)
     if fn.endswith('~'):
         return False
@@ -160,7 +161,7 @@ def good_fname(fname, exclude_exts=()):
         return False
     if froot.startswith('notes'):
         return False
-    if froot.endswith('solution'):
+    if froot.endswith('solution') and not with_solution:
         return False
     if froot.endswith('template'):
         return False
@@ -262,9 +263,14 @@ def process_dir(path, site_dict=None):
 
 
 def write_exercise_ipynb(path, execute=False):
+    return write_ipynb(path, nb_type='exercise', execute=execute)
+
+
+def write_ipynb(path, nb_type, execute=False):
     fnames = get_exercise_fnames(path)
-    write_nb(process_nb(fnames['exercise'], execute=execute),
-             ipynb_fname(fnames['exercise']))
+    out_fname = ipynb_fname(fnames[nb_type])
+    write_nb(process_nb(fnames[nb_type], execute=execute), out_fname)
+    return out_fname
 
 
 def grade_path(path):
@@ -286,7 +292,8 @@ def clean_path(path):
         break
 
 
-def write_dir(path, out_path, clean=True, exclude_exts=('.Rmd',)):
+def write_dir(path, out_path, clean=True, exclude_exts=('.Rmd',),
+              with_solution=False):
     """ Copy exercise files from `path` to directory `out_path`
 
     `clean`, if True, will clean all files from the eventual output directory
@@ -294,7 +301,12 @@ def write_dir(path, out_path, clean=True, exclude_exts=('.Rmd',)):
 
     `exclude_exts` specifies filename extensions that should be excluded from
     output directory.
+
+    If `with_solution` is True, also copy the solution file.
     """
+    func = partial(good_fname,
+                   exclude_exts=exclude_exts,
+                   with_solution=with_solution)
     if op.isdir(out_path) and clean:
         clean_path(out_path)
     else:
@@ -302,7 +314,7 @@ def write_dir(path, out_path, clean=True, exclude_exts=('.Rmd',)):
     for dirpath, dirnames, filenames in os.walk(path):
         sub_dir = op.relpath(dirpath, path)
         dirnames[:] = [d for d in dirnames if good_dirname(d)]
-        filenames[:] = [f for f in filenames if good_fname(f, exclude_exts)]
+        filenames[:] = [f for f in filenames if func(f)]
         if len(filenames) == 0:
             continue
         this_out_path = op.join(out_path, sub_dir)

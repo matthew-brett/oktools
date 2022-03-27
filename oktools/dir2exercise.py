@@ -18,7 +18,7 @@ from subprocess import check_call, check_output, run, PIPE
 
 
 from .cutils import (cd, proc_config, build_url, check_repo, process_dir,
-                     write_exercise_ipynb, grade_path, write_dir)
+                     write_ipynb, grade_path, write_dir, get_exercise_fnames)
 
 
 def push_dir(path, site_dict, strip=False, force=False):
@@ -91,6 +91,8 @@ def main():
                        )
     parser.add_argument('--no-grade', action='store_true',
                         help='If specified, do not grade solution notebook')
+    parser.add_argument('--with-solution', action='store_true',
+                        help='If specified, also upload solution')
     parser.add_argument('--rmd', action='store_true',
                         help='If specified, use Rmd exercise file rather than '
                         'ipynb (for now, implies --no-grade)')
@@ -116,17 +118,22 @@ def main():
     in_dir = op.abspath(args.dir)
     check_repo(in_dir, not args.rmd)
     process_dir(in_dir, site_dict=site_dict)
+    ex_fname = get_exercise_fnames(in_dir)['exercise']
     if not args.rmd:
-        write_exercise_ipynb(in_dir)
+        ex_fname = write_ipynb(in_dir, 'exercise')
+        if args.with_solution:
+            write_ipynb(in_dir, 'solution', execute=True)
     if not args.no_grade:
         grade_path(in_dir)
     out_path = op.abspath(op.join(out_path, op.basename(in_dir)))
     write_dir(args.dir, out_path, clean=not args.no_clean,
-              exclude_exts=() if args.rmd else ('.Rmd',))
+              exclude_exts=() if args.rmd else ('.Rmd',),
+              with_solution=args.with_solution)
     if args.push:
         push_dir(out_path, site_dict, args.strip, args.force)
     if site_dict.get('jh_root'):
-        print(build_url(out_path, site_dict))
+        ex_out = op.join(out_path, op.basename(ex_fname))
+        print(build_url(ex_out, site_dict))
 
 
 if __name__ == '__main__':
