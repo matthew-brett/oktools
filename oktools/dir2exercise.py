@@ -116,8 +116,8 @@ def main():
                                       args.site_config,
                                       args.out_path)
     in_dir = op.abspath(args.dir)
-    check_repo(in_dir, not args.rmd)
     process_dir(in_dir, site_dict=site_dict)
+    check_repo(in_dir, not args.rmd)
     ex_fname = get_exercise_fnames(in_dir)['exercise']
     if not args.rmd:
         ex_fname = write_ipynb(in_dir, 'exercise')

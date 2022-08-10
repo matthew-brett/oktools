@@ -3,6 +3,7 @@
 
 import os
 import os.path as op
+from pathlib import Path
 import sys
 from glob import iglob
 import shutil
@@ -59,16 +60,20 @@ def find_site_config(dir_path, filenames=('course.yml',
                                           '_config.yml')):
     """ Iterate to parents to locate one of filenames specified in `filenames`.
     """
-    dir_path = op.abspath(dir_path)
+    dir_path = Path(dir_path).resolve()
     while True:
         for fn in filenames:
-            pth = op.join(dir_path, fn)
-            if op.isfile(pth):
-                return pth
+            pth = dir_path / fn
+            if pth.is_file():
+                return str(pth)
         prev_dir_path = dir_path
-        dir_path = op.abspath(op.join(dir_path, '..'))
-        if (dir_path == prev_dir_path or  # We hit root.
-            not prev_dir_path.startswith(dir_path)): # We hit fs boundary.
+        dir_path = (dir_path / '..').resolve()
+        if dir_path == prev_dir_path:  # We hit root.
+            break
+        try:
+            prev_dir_path.relative_to(dir_path)
+        except ValueError:
+            # We hit fs boundary.
             break
     return None
 
