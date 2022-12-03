@@ -23,7 +23,7 @@ jobs:
           flit install
       - name: Run tests
         run: |
-          pytest oktools --log-level DEBUG --cov-config=.coveragerc --cov=oktools --doctest-modules
+          pytest oktools --log-level DEBUG --cov-config=.coveragerc --cov=oktools
       - name: Collect code coverage data
         run: |
           coverage xml
