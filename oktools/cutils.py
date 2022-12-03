@@ -305,20 +305,21 @@ def write_dir(path, out_path, clean=True, exclude_exts=('.Rmd',),
 
     If `with_solution` is True, also copy the solution file.
     """
-    func = partial(good_fname,
-                   exclude_exts=exclude_exts,
-                   with_solution=with_solution)
-    if op.isdir(out_path) and clean:
+    out_path = Path(out_path)
+    filt_func = partial(good_fname,
+                        exclude_exts=exclude_exts,
+                        with_solution=with_solution)
+    if out_path.is_dir() and clean:
         clean_path(out_path)
     else:
-        os.makedirs(out_path)
+        out_path.mkdir(parents=True)
     for dirpath, dirnames, filenames in os.walk(path):
         sub_dir = op.relpath(dirpath, path)
         dirnames[:] = [d for d in dirnames if good_dirname(d)]
-        filenames[:] = [f for f in filenames if func(f)]
+        filenames[:] = [f for f in filenames if filt_func(f)]
         if len(filenames) == 0:
             continue
-        this_out_path = op.join(out_path, sub_dir)
+        this_out_path = out_path / sub_dir
         if not op.isdir(this_out_path):
             os.makedirs(this_out_path)
         for f in filenames:
