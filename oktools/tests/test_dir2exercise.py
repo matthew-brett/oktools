@@ -1,5 +1,6 @@
 # Test for dir2exercise utilities
 
+from pathlib import Path
 import os.path as op
 import shutil
 from pathlib import Path
@@ -7,6 +8,7 @@ from pathlib import Path
 HERE = op.realpath(op.dirname(__file__))
 DATA_DIR = op.join(HERE, 'data')
 THREE_GIRLS = op.join(DATA_DIR, 'three_girls')
+THREE_GIRLS_EXTRA = op.join(DATA_DIR, 'three_girls_extra')
 
 
 from tempfile import TemporaryDirectory
@@ -85,3 +87,21 @@ test = {
         write_ipynb(tmp_3g, 'exercise')
         with pytest.raises(RuntimeError):
             grade_path(tmp_3g)
+
+
+def test_proc_test():
+    # Test extras removed
+    with TemporaryDirectory() as tmpdir:
+        tmp_3g = op.join(tmpdir, 'three_girls')
+        shutil.copytree(THREE_GIRLS_EXTRA, tmp_3g)
+        tmp_out = op.join(tmpdir, 'out_path')
+        write_dir(tmp_3g, tmp_out)
+        out_test_pth = Path(tmp_out) / 'tests' / 'q_1_no_girls.py'
+        out_test_text = out_test_pth.read_text()
+        assert '-extra' not in out_test_text
+        assert '>>> True' not in out_test_text
+        out_test_pth = Path(tmp_out) / 'tests' / 'q_3_three_or_fewer.py'
+        out_test_text = out_test_pth.read_text()
+        assert '-extra' not in out_test_text
+        assert '>>> False' not in out_test_text
+        assert ">>> 'two'" not in out_test_text

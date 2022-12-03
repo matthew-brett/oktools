@@ -293,6 +293,21 @@ def clean_path(path):
         break
 
 
+EXTRA_BLOCK_RE = re.compile(r'^\s*#:\s*begin-extra\s*$.*?^\s*#:\s*end-extra\s*$',
+                            flags=re.M | re.S)
+
+def proc_test_text(test_text):
+    test_text = EXTRA_BLOCK_RE.sub('', test_text)
+    if (re.search('begin-extra', test_text) or
+        re.search('end-extra', test_text)):
+        raise ValueError('Found -extra marker in processed test')
+    return test_text
+
+
+def proc_test(in_path, out_path):
+    return out_path.write_text(proc_test_text(in_path.read_text()))
+
+
 def write_dir(path, out_path, clean=True, exclude_exts=('.Rmd',),
               with_solution=False):
     """ Copy exercise files from `path` to directory `out_path`
@@ -323,5 +338,11 @@ def write_dir(path, out_path, clean=True, exclude_exts=('.Rmd',),
         this_out_path = out_path / sub_dir
         if not this_out_path.is_dir():
             this_out_path.mkdir(parents=True)
+        in_tests = dirpath.stem == 'tests'
         for f in filenames:
-            (this_out_path / f).write_bytes((dirpath / f).read_bytes())
+            this_in = dirpath / f
+            this_out = this_out_path / f
+            if in_tests and this_in.suffix == '.py':
+                this_out.write_text(proc_test_text(this_in.read_text()))
+            else:
+                this_out.write_bytes(this_in.read_bytes())

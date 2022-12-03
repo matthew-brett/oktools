@@ -13,8 +13,9 @@ HERE = op.realpath(op.dirname(__file__))
 DATA_DIR = op.join(HERE, 'data')
 THREE_GIRLS = op.join(DATA_DIR, 'three_girls')
 
+from oktools.cutils import process_nb, find_site_config, proc_test_text
 
-from oktools.cutils import process_nb, find_site_config
+import pytest
 
 
 HTML_COMMENT_RE = re.compile(r'<!--(.*?)-->', re.M | re.DOTALL)
@@ -54,3 +55,74 @@ def test_find_site_config():
     # Single config in directory.
     ed_pth = op.join(DATA_DIR, 'exercise_dir')
     assert rp(find_site_config(ed_pth)) == rp(op.join(ed_pth, '_config.yml'))
+
+
+def test_proc_test():
+    test_text = '''\
+test = {
+'name': 'Question 5',
+'points': 20,
+'suites': [
+    {
+    'cases': [
+        {
+        'code': r"""
+        >>> False
+        True
+        """,
+        'hidden': False,
+        'locked': False
+        },
+# placeholder
+    ],
+    'scored': True,
+    'setup': '',
+    'teardown': '',
+    'type': 'doctest'
+    }
+]
+}'''
+    assert proc_test_text(test_text) == test_text
+    with_extra = test_text.replace('# placeholder', '''\
+        #: begin-extra
+        {
+        'code': r"""
+        >>> True
+        False
+        """,
+        'hidden': False,
+        'locked': False
+        },
+        #: end-extra
+''')
+    res = proc_test_text(with_extra)
+    assert res != test_text
+    assert res == test_text.replace('# placeholder', '')
+    bad_extra = test_text.replace('# placeholder', '''\
+        #: begin-extra
+        {
+        'code': r"""
+        >>> True
+        False
+        """,
+        'hidden': False,
+        'locked': False
+        },
+        #: end-extras
+''')
+    with pytest.raises(ValueError):
+        proc_test_text(bad_extra)
+    bad_extra2 = test_text.replace('# placeholder', '''\
+        # begin-extra
+        {
+        'code': r"""
+        >>> True
+        False
+        """,
+        'hidden': False,
+        'locked': False
+        },
+        #: end-extra
+''')
+    with pytest.raises(ValueError):
+        proc_test_text(bad_extra2)
