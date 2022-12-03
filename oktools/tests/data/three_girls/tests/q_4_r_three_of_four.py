@@ -27,10 +27,10 @@ test = {
         {
           # n = 10000
           # # Take 10000 samples of 10000 trials of this problem.
-          # res = np.sum(np.random.binomial(4, 0.487, (n, n)) == 3, axis=1) / n
+          # res = np.sum(rng.binomial(4, 0.487, (n, n)) == 3, axis=1) / n
           # np.quantile(res, [0.005, 0.995])
           'code': r"""
-          >>> 0.226 < p_r3_of_4 < 0.248
+          >>> 0.225 < p_r3_of_4 < 0.249
           True
           """,
           'hidden': False,
