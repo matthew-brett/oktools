@@ -309,7 +309,7 @@ def proc_test(in_path, out_path):
 
 
 def write_dir(path, out_path, clean=True, exclude_exts=('.Rmd',),
-              with_solution=False):
+              with_solution=False, with_extras=False):
     """ Copy exercise files from `path` to directory `out_path`
 
     `clean`, if True, will clean all files from the eventual output directory
@@ -319,6 +319,8 @@ def write_dir(path, out_path, clean=True, exclude_exts=('.Rmd',),
     output directory.
 
     If `with_solution` is True, also copy the solution file.
+
+    If `with_extras` is True, do no strip extra withheld tests.
     """
     path, out_path = (Path(p) for p in (path, out_path))
     filt_func = partial(good_fname,
@@ -338,11 +340,11 @@ def write_dir(path, out_path, clean=True, exclude_exts=('.Rmd',),
         this_out_path = out_path / sub_dir
         if not this_out_path.is_dir():
             this_out_path.mkdir(parents=True)
-        in_tests = dirpath.stem == 'tests'
+        strip_tests = not with_extras and dirpath.stem == 'tests'
         for f in filenames:
             this_in = dirpath / f
             this_out = this_out_path / f
-            if in_tests and this_in.suffix == '.py':
+            if strip_tests and this_in.suffix == '.py':
                 this_out.write_text(proc_test_text(this_in.read_text()))
             else:
                 this_out.write_bytes(this_in.read_bytes())

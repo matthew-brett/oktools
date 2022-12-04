@@ -103,5 +103,21 @@ def test_proc_test():
         out_test_pth = Path(tmp_out) / 'tests' / 'q_3_three_or_fewer.py'
         out_test_text = out_test_pth.read_text()
         assert '-extra' not in out_test_text
+        # Test sandwiched between two sections to remove.
+        assert "'p_3_or_fewer' in vars()" in out_test_text
         assert '>>> False' not in out_test_text
         assert ">>> 'two'" not in out_test_text
+        # Try using with_extras flag.
+        tmp_out = op.join(tmpdir, 'unstripped')
+        write_dir(tmp_3g, tmp_out, with_extras=True)
+        out_test_pth = Path(tmp_out) / 'tests' / 'q_1_no_girls.py'
+        out_test_text = out_test_pth.read_text()
+        assert '-extra' in out_test_text
+        assert '>>> True' in out_test_text
+        out_test_pth = Path(tmp_out) / 'tests' / 'q_3_three_or_fewer.py'
+        out_test_text = out_test_pth.read_text()
+        assert '-extra' in out_test_text
+        # Test sandwiched between two sections to remove.
+        assert "'p_3_or_fewer' in vars()" in out_test_text
+        assert '>>> False' in out_test_text
+        assert ">>> 'two'" in out_test_text

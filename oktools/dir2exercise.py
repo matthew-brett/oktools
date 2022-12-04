@@ -93,6 +93,8 @@ def main():
                         help='If specified, do not grade solution notebook')
     parser.add_argument('--with-solution', action='store_true',
                         help='If specified, also upload solution')
+    parser.add_argument('--with-extras', action='store_true',
+                        help='If specified, also include extra witheld tests')
     parser.add_argument('--rmd', action='store_true',
                         help='If specified, use Rmd exercise file rather than '
                         'ipynb (for now, implies --no-grade)')
@@ -128,7 +130,8 @@ def main():
     out_path = op.abspath(op.join(out_path, op.basename(in_dir)))
     write_dir(args.dir, out_path, clean=not args.no_clean,
               exclude_exts=() if args.rmd else ('.Rmd',),
-              with_solution=args.with_solution)
+              with_solution=args.with_solution,
+              with_extras=args.with_extras)
     if args.push:
         push_dir(out_path, site_dict, args.strip, args.force)
     if site_dict.get('jh_root'):
