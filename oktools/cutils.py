@@ -301,11 +301,18 @@ def proc_test_text(test_text):
     if (re.search('begin-extra', test_text) or
         re.search('end-extra', test_text)):
         raise ValueError('Found -extra marker in processed test')
+    # Screening check for syntax errors.
+    exec(test_text)
     return test_text
 
 
-def proc_test(in_path, out_path):
-    return out_path.write_text(proc_test_text(in_path.read_text()))
+def proc_test_paths(in_path, out_path):
+    in_text = in_path.read_text()
+    try:
+        out_text = proc_test_text(in_text)
+    except SyntaxError as e:
+        raise SyntaxError(f'{e} in {in_path}')
+    return out_path.write_text(out_text)
 
 
 def write_dir(path, out_path, clean=True, exclude_exts=('.Rmd',),
@@ -345,6 +352,6 @@ def write_dir(path, out_path, clean=True, exclude_exts=('.Rmd',),
             this_in = dirpath / f
             this_out = this_out_path / f
             if strip_tests and this_in.suffix == '.py':
-                this_out.write_text(proc_test_text(this_in.read_text()))
+                proc_test_paths(this_in, this_out)
             else:
                 this_out.write_bytes(this_in.read_bytes())

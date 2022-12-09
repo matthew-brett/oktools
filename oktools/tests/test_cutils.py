@@ -126,3 +126,18 @@ test = {
 ''')
     with pytest.raises(ValueError):
         proc_test_text(bad_extra2)
+    # Misplaced markers
+    bad_extra3 = test_text.replace('# placeholder', '''\
+        {
+        #: begin-extra
+        'code': r"""
+        >>> True
+        False
+        """,
+        'hidden': False,
+        'locked': False
+        },
+        #: end-extra
+''')
+    with pytest.raises(SyntaxError):
+        proc_test_text(bad_extra3)
