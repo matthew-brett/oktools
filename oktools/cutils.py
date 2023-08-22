@@ -166,8 +166,6 @@ def good_fname(fname, exclude_exts=(), with_solution=False):
         return False
     if froot.startswith('notes'):
         return False
-    if froot.startswith('__'):
-        return False
     if froot.endswith('solution') and not with_solution:
         return False
     if froot.endswith('template'):
