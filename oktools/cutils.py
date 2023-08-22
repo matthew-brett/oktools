@@ -355,3 +355,23 @@ def write_dir(path, out_path, clean=True, exclude_exts=('.Rmd',),
                 proc_test_paths(this_in, this_out)
             else:
                 this_out.write_bytes(this_in.read_bytes())
+
+
+def has_md_text(nb, cell_regex):
+    """ True if notebook `nb` has Markdown text matching `cell_regex`
+    """
+    regex = re.compile(cell_regex, re.I)
+    for cell in nb.cells:
+        if cell['cell_type'] != 'markdown' or not 'source' in cell:
+            continue
+        if regex.search(cell['source'].lower()):
+            return True
+    return False
+
+
+def has_md_text_component(nb, nb_path, cell_regex):
+    return nb_path if has_md_text(nb, cell_regex) else None
+
+
+def has_md_checker(cell_regex):
+    return partial(has_md_text_component, cell_regex=cell_regex)
