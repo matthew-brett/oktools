@@ -233,11 +233,11 @@ def check_repo(path, ipynb_exercise=True):
     fnames = [fname for fname in fnames if
               all([good_dirname(pc) for pc in op.split(op.dirname(fname))])]
     ex_fnames = get_exercise_fnames(path)
-    ok_untracked = [op.relpath(ex_fnames['exercise'], top_level)]
+    ok_untracked = [Path(ex_fnames['exercise']).relative_to(top_level)]
     if ipynb_exercise:
-        ok_untracked.append(ipynb_fname(ok_untracked[0]))
+        ok_untracked.append(Path(ipynb_fname(ok_untracked[0])))
     scary_fnames = [fname for fname in fnames if good_fname(fname)
-                    and not fname in ok_untracked]
+                    and not Path(fname) in ok_untracked]
     if len(scary_fnames):
         raise RuntimeError('Scary untracked / ignored files in repo\n'
                            + '\n'.join(scary_fnames))
