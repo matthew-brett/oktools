@@ -52,10 +52,9 @@ NAME_VALUE_RE = re.compile(
 
 
 def int_or_float(v):
-    try:
-        return int(v)
-    except ValueError:
+    if '.' in v:
         return float(v)
+    return int(v)
 
 
 _val_procs = dict(
