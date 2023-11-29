@@ -132,19 +132,15 @@ def parse_test(text):
         if suite is None or parsed:  # Start new suite if suite line.
             suite = new_suite
             test['suites'].append(suite)
-            print('Starting new suite')
             case = None
         new_case, parsed = get_part(lines, 'case')
         if case is None or parsed:  # Start new case if case line.
             case = new_case
             suite['cases'].append(case)
-            print('Starting new case')
         if not lines:
             break
         # Remaining lines are code lines
         line = lines.pop(0)
-        print(f'Line is: "{line}"')
         case['code'] = (line if case['code'] is None
                         else case['code'] + '\n' + line)
-        print('case code is:\n', case['code'], '\n---')
     return test
