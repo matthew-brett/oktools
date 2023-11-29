@@ -4,7 +4,7 @@
 import os.path as op
 from glob import glob
 
-from grade_oknb import get_tests_points, grade_nb_fname
+from oktools.grade_oknb import get_tests_points, grade_nb_fname
 
 HERE = op.dirname(__file__)
 NB_DIR = op.join(HERE, 'data', 'three_girls')
