@@ -8,12 +8,12 @@ jobs:
   tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           submodules: true
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         with:
-          python-version: "3.x"
+          python-version: "3.11"
       - name: Install test dependencies
         run: |
           pip install okpy pytest-cov
@@ -28,7 +28,7 @@ jobs:
         run: |
           coverage xml
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3
         with:
           fail_ci_if_error: true
           token: "d95d4b51-2a76-4fd8-a21f-6368e114e9ed"
