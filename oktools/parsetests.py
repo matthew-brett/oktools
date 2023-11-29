@@ -51,16 +51,11 @@ NAME_VALUE_RE = re.compile(
     flags=re.VERBOSE)
 
 
-def int_or_float(v):
-    if '.' in v:
-        return float(v)
-    return int(v)
-
-
+# Processing functions for all above match types.
 _val_procs = dict(
     dqstring=lambda v : v[1:-1],
     sqstring=lambda v : v[1:-1],
-    number=int_or_float,
+    number=lambda x : float(x) if '.' in x else int(x),
     boolean=lambda x : x.lower() == 'true',
     uqstring=str
 )
