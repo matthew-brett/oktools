@@ -73,10 +73,13 @@ def proc_param(m):
     raise HeaderParserError(f'Unexpected parameter in {m.group()}')
 
 
-def parse_t(line, test_marker):
-    if not line.startswith(test_marker):
-        raise HeaderParserError(f'Expecting {test_marker} at start of line')
-    param_str = line[len(test_marker):].strip()
+def parse_marked(line, marker):
+    if not line.startswith(marker):
+        raise HeaderParserError(f'Expecting {marker} at start of line')
+    return get_params(line[len(marker):].strip())
+
+
+def get_params(param_str):
     if param_str == '':
         return {}
     matches = [m for m in NAME_VALUE_RE.finditer(param_str)]
@@ -115,7 +118,7 @@ def get_part(lines, name):
     part = deepcopy(info['default'])
     if lines and lines[0].startswith(info['marker']):
         line = lines.pop(0)
-        part = part | parse_t(line, info['marker'])
+        part = part | parse_marked(line, info['marker'])
         return part, True
     return part, False
 

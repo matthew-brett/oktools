@@ -65,27 +65,28 @@ assert a == 1''',
 
 
 def test_header_parse():
-    assert otp.parse_t('#t foo=.1', '#t') == dict(foo=.1)
-    assert otp.parse_t('#b foo=.1', '#b') == dict(foo=.1)
+    assert otp.parse_marked('#t foo=.1', '#t') == dict(foo=.1)
+    assert otp.parse_marked('#b foo=.1', '#b') == dict(foo=.1)
     with pytest.raises(otp.HeaderParserError):
-        otp.parse_t('#t foo=.1', '#b')
-    assert otp.parse_t('#t  bar=baz', '#t') == dict(bar='baz')
-    assert otp.parse_t('#t  bar=baz', '#t') == dict(bar='baz')
-    assert otp.parse_t('#t  bar=True', '#t') == dict(bar=True)
-    assert otp.parse_t('#t  bar=False', '#t') == dict(bar=False)
-    assert otp.parse_t('#t  bar="baz boo"', '#t') == dict(bar='baz boo')
-    assert otp.parse_t("#t  bar='baz boo'", '#t') == dict(bar='baz boo')
-    assert (otp.parse_t("#t  bar_buv='baz boo'", '#t') ==
+        otp.parse_marked('#t foo=.1', '#b')
+    assert otp.parse_marked('#t  bar=baz', '#t') == dict(bar='baz')
+    assert otp.parse_marked('#t  bar=baz', '#t') == dict(bar='baz')
+    assert otp.parse_marked('#t  bar=True', '#t') == dict(bar=True)
+    assert otp.parse_marked('#t  bar=False', '#t') == dict(bar=False)
+    assert otp.parse_marked('#t  bar="baz boo"', '#t') == dict(bar='baz boo')
+    assert otp.parse_marked("#t  bar='baz boo'", '#t') == dict(bar='baz boo')
+    assert (otp.parse_marked("#t  bar_buv='baz boo'", '#t') ==
             dict(bar_buv='baz boo'))
-    assert otp.parse_t('#t foo=.1 bar=baz', '#t') == dict(foo=.1, bar='baz')
+    assert (otp.parse_marked('#t foo=.1 bar=baz', '#t') ==
+            dict(foo=.1, bar='baz'))
     with pytest.raises(otp.HeaderParserError):
-        otp.parse_t('# A comment', '#A')
+        otp.parse_marked('# A comment', '#A')
     with pytest.raises(otp.HeaderParserError):
-        otp.parse_t('#t A comment', '#t')
+        otp.parse_marked('#t A comment', '#t')
     with pytest.raises(otp.HeaderParserError):
-        otp.parse_t('#t bar=', '#t')
+        otp.parse_marked('#t bar=', '#t')
     with pytest.raises(otp.HeaderParserError):
-        otp.parse_t('#t bar=baz buv', '#t')
+        otp.parse_marked('#t bar=baz buv', '#t')
 
 
 def test_test_parse():
