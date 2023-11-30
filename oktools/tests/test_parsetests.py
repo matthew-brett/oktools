@@ -7,7 +7,7 @@ import pytest
 
 
 EG_CELL_TEXT = """\
-#t name=q1a_2 points=1
+#t q1a_2 points=1
 # a should be greater than 0.
 assert a > 0
 #c
@@ -64,7 +64,22 @@ assert a == 1''',
 }
 
 
-def test_header_parse():
+def test_parse_header():
+    assert otp.parse_header('#t q2bi_extended') == {
+        'name': 'q2bi_extended',
+        'points': 1,
+        'suites': []}
+    assert otp.parse_header('#t q2bi_extended points=1') == {
+        'name': 'q2bi_extended',
+        'points': 1,
+        'suites': []}
+    assert otp.parse_header('#t q2bi_extended points=5') == {
+        'name': 'q2bi_extended',
+        'points': 5,
+        'suites': []}
+
+
+def test_parse_params():
     assert otp.parse_marked('#t foo=.1', '#t') == dict(foo=.1)
     assert otp.parse_marked('#b foo=.1', '#b') == dict(foo=.1)
     with pytest.raises(otp.HeaderParserError):
@@ -87,6 +102,14 @@ def test_header_parse():
         otp.parse_marked('#t bar=', '#t')
     with pytest.raises(otp.HeaderParserError):
         otp.parse_marked('#t bar=baz buv', '#t')
+
+
+
+
+
+def test_to_doctest():
+    assert otp.to_doctest('foo') == '>>> foo'
+    assert otp.to_doctest('foo\nbar') == '>>> foo\n>>> bar'
 
 
 def test_test_parse():

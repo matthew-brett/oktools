@@ -2,7 +2,7 @@
 
 Test blocks are code cells in notebooks, of this form::
 
-    #t name=q1a_2 points=1
+    #t q1a_2 points=1
     # a should be greater than 0.
     assert a > 0
     #c
@@ -16,20 +16,27 @@ Test blocks are code cells in notebooks, of this form::
     # a should be less than 5.
     assert a == 1
 
-This defines a single test named ``q1a_2`, work 1 point.  There are 4 cases of
-which the last two are private.
+This defines a single test named ``q1a_2`, worth 1 point.  There are 4 cases in
+2 suites.  The second suite is marked as private.
 
-Names and points are only valid in the first ``#t`` definition line.
-Specifically, later ``#t`` cannot override the name or points.  The name must
-be specified; the default points value is 1.  In the example above, we could
-have omitted ``points=1`` to get the same outcome, as 1 is the default.
+The test (``#t``) name must be specified after the ``#t`` marker; the default
+points value is 1.  In the example above, we could have omitted ``points=1`` to
+get the same outcome, as 1 is the default.
 
-Parameters set in ``#t`` lines hold until overridden by later ``#t`` lines.
-Hence the last _two_ tests are private.
+* ``#s`` lines mark the start of a new suite in the current test.
+* ``#c`` lines mark the start of a new case in the current suite.
+
+All of ``#t, #s`` and ``#c`` lines can continue with key=value parameter lists
+(although the ``#t`` marker should also have a name parameter preceding).
 """
 
 import re
 from copy import deepcopy
+from pathlib import Path
+from pprint import pformat
+from argparse import ArgumentParser, RawDescriptionHelpFormatter
+
+import jupytext
 
 
 class HeaderParserError(Exception):
@@ -60,7 +67,6 @@ _val_procs = dict(
     uqstring=str
 )
 
-
 def proc_param(m):
     d = m.groupdict()
     name = d.pop('name')
@@ -73,6 +79,18 @@ def proc_param(m):
     raise HeaderParserError(f'Unexpected parameter in {m.group()}')
 
 
+HEADER_RE = re.compile(r'^#t\s+(\w+)(\s+.*?)?$')
+
+
+def parse_header(line):
+    if not (m := HEADER_RE.match(line)):
+        return None
+    name, param_str = m.groups()
+    return ({'points': 1} |
+            (get_params(param_str) if param_str else {}) |
+            {'name': name, 'suites': []})
+
+
 def parse_marked(line, marker):
     if not line.startswith(marker):
         raise HeaderParserError(f'Expecting {marker} at start of line')
@@ -80,6 +98,7 @@ def parse_marked(line, marker):
 
 
 def get_params(param_str):
+    param_str = param_str.strip()
     if param_str == '':
         return {}
     matches = [m for m in NAME_VALUE_RE.finditer(param_str)]
@@ -89,12 +108,6 @@ def get_params(param_str):
 
 
 PARTS = {
-    'test': {'default': {
-        'name': None,
-        'points': 1,
-        'suites': []},
-        'marker': '#t',
-    },
     'suite': {'default': {
         'cases': [],
         'scored': True,
@@ -124,10 +137,11 @@ def get_part(lines, name):
 
 
 def parse_test(text):
-    lines = [L for L in text.strip().splitlines()
-             if not L.startswith(COMMENT_MARKER)]
-    test, parsed = get_part(lines, 'test')
-    if not parsed:
+    lines = text.strip().splitlines()
+    if not lines:
+        return None
+    test = parse_header(lines.pop(0))
+    if not test:
         return None
     suite = None
     while True:
@@ -140,10 +154,52 @@ def parse_test(text):
         if case is None or parsed:  # Start new case if case line.
             case = new_case
             suite['cases'].append(case)
-        if not lines:
+        try:
+            line = lines.pop(0)
+        except IndexError:
             break
-        # Remaining lines are code lines
-        line = lines.pop(0)
-        case['code'] = (line if case['code'] is None
-                        else case['code'] + '\n' + line)
+        # Remaining lines are comments or code lines
+        if not line.startswith(COMMENT_MARKER):
+            case['code'] = (line if case['code'] is None
+                            else case['code'] + '\n' + line)
     return test
+
+
+def to_doctest(code):
+    return '>>> ' + '\n>>> '.join(code.splitlines())
+
+
+def cases2doctest(test):
+    out = deepcopy(test)
+    for suite in out['suites']:
+        for case in suite['cases']:
+            case['code'] = to_doctest(case['code'])
+    return out
+
+
+def get_parser():
+    parser = ArgumentParser(description=__doc__,  # Usage from docstring
+                            formatter_class=RawDescriptionHelpFormatter)
+    parser.add_argument('nb_fname',
+                        help='Notebook filename')
+    parser.add_argument('-p', '--private', action='store_true',
+                        help='Include private tests')
+    return parser
+
+
+def main():
+    parser = get_parser()
+    args = parser.parse_args()
+    nb_path = Path(args.nb_fname)
+    nb = jupytext.read(nb_path)
+    tests_path = nb_path.parent / 'tests'
+    for cell in nb['cells']:
+        if cell['cell_type'] != 'code':
+            continue
+        if not (test := parse_test(cell['source'])):
+            continue
+        if not args.private:
+            test['suites'] = [s for s in test['suites'] if not s.get('private')]
+        out_path = tests_path / f"{test['name']}__.py"
+        test_text = pformat(cases2doctest(test))
+        out_path.write_text('tests = ' + test_text)
