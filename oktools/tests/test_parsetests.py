@@ -104,12 +104,52 @@ def test_parse_params():
         otp.parse_marked('#t bar=baz buv', '#t')
 
 
-
-
-
 def test_to_doctest():
     assert otp.to_doctest('foo') == '>>> foo'
     assert otp.to_doctest('foo\nbar') == '>>> foo\n>>> bar'
+    assert otp.to_doctest('foo\nbar') == '>>> foo\n>>> bar'
+    assert (otp.to_doctest('if a == 1:\n    b = 2\n    print(a + b)\nc = 3') ==
+            '>>> if a == 1:\n...     b = 2\n...     print(a + b)\n>>> c = 3')
+    in_code = r'''
+def func(a):
+    b = 3
+    return a + b
+
+if func(-3):
+    print('yes')
+'''
+    out_code = r'''>>>
+>>> def func(a):
+...     b = 3
+...     return a + b
+>>>
+>>> if func(-3):
+...     print('yes')'''
+    actual = otp.to_doctest(in_code)
+    assert actual == out_code
+    in_code = """
+a = 1
+# Comment
+# Comment 2
+
+# Comment 3
+if a == 1:
+    b = 3
+    print(a)
+print('Done')
+"""
+    out_code = '''>>>
+>>> a = 1
+>>> # Comment
+>>> # Comment 2
+>>>
+>>> # Comment 3
+>>> if a == 1:
+...     b = 3
+...     print(a)
+>>> print('Done')'''
+    actual = otp.to_doctest(in_code)
+    assert actual == out_code
 
 
 def test_test_parse():

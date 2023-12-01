@@ -33,6 +33,7 @@ All of ``#t, #s`` and ``#c`` lines can continue with key=value parameter lists
 import re
 from copy import deepcopy
 from pathlib import Path
+import ast
 from pprint import pformat
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 
@@ -166,7 +167,12 @@ def parse_test(text):
 
 
 def to_doctest(code):
-    return '>>> ' + '\n>>> '.join(code.splitlines())
+    lines = code.splitlines()
+    prefixes = ['>>> ' if L.strip() else '>>>' for L in lines]
+    for node in ast.parse(code).body:
+        s = slice(node.lineno, node.end_lineno)
+        prefixes[s] = ['... '] * len(prefixes[s])
+    return '\n'.join(p + L for p, L in zip(prefixes, lines))
 
 
 def cases2doctest(test):
