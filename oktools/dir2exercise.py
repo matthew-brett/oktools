@@ -107,6 +107,9 @@ def main():
     parser.add_argument('--no-clean', action='store_true',
                         help='If specified, do not delete existing exercise '
                              'files in output directory')
+    parser.add_argument('--no-check-files', action='store_true',
+                        help='If specified, do not check repository for '
+                             'untracked / ignore files in output directory')
     parser.add_argument('--site-config',
                         help='Path to configuration file for course '
                         '(default finds {course,_config}.yml, in dir, parents)'
@@ -119,7 +122,7 @@ def main():
                                       args.out_path)
     in_dir = op.abspath(args.dir)
     process_dir(in_dir, site_dict=site_dict)
-    check_repo(in_dir, not args.rmd)
+    check_repo(in_dir, not args.rmd, not args.no_check_files)
     ex_fname = get_exercise_fnames(in_dir)['exercise']
     if not args.rmd:
         ex_fname = write_ipynb(in_dir, 'exercise')

@@ -223,7 +223,7 @@ def git_out(cmd):
     return check_output(['git'] + list(cmd), text=True).strip()
 
 
-def check_repo(path, ipynb_exercise=True):
+def check_repo(path, ipynb_exercise=True, check_files=True):
     top_level = git_out(['rev-parse', '--show-toplevel'])
     out = git_out(
         ['status', '-uall', '--ignored=traditional',
@@ -236,6 +236,8 @@ def check_repo(path, ipynb_exercise=True):
     ok_untracked = [Path(ex_fnames['exercise']).relative_to(top_level)]
     if ipynb_exercise:
         ok_untracked.append(Path(ipynb_fname(ok_untracked[0])))
+    if not check_files:
+        return
     scary_fnames = [fname for fname in fnames if good_fname(fname)
                     and not Path(fname) in ok_untracked]
     if len(scary_fnames):

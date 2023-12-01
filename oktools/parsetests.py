@@ -198,8 +198,10 @@ def main():
             continue
         if not (test := parse_test(cell['source'])):
             continue
-        if not args.private:
+        if args.private:
+            [s.pop('private', None) for s in test['suites']]
+        else:
             test['suites'] = [s for s in test['suites'] if not s.get('private')]
         out_path = tests_path / f"{test['name']}__.py"
         test_text = pformat(cases2doctest(test))
-        out_path.write_text('tests = ' + test_text)
+        out_path.write_text('test = ' + test_text)
