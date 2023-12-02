@@ -281,8 +281,8 @@ def grade_path(path):
     grades, messages = gok.grade_nb_fname(fnames['solution'], path)
     gok.print_grades(grades)
     gok.print_messages(messages)
-    if not all(grades.values()):
-        raise RuntimeError('One or more grades 0')
+    if any(messages.values()):
+        raise RuntimeError('One or more failures')
 
 
 def clean_path(path):
