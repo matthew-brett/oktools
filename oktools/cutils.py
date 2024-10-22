@@ -4,7 +4,6 @@
 import os
 import os.path as op
 from pathlib import Path
-import sys
 from glob import iglob
 import shutil
 import re
@@ -23,11 +22,7 @@ from jinja2 import Template
 from rmdex.exerciser import (make_exercise, make_solution, write_utf8,
                              read_utf8)
 
-HERE = op.dirname(op.realpath(__file__))
-SITE_ROOT = op.realpath(op.join(HERE, '..'))
-sys.path.append(HERE)
-
-import grade_oknb as gok
+from . import grade_oknb as gok
 
 
 TEMPLATE_RE = re.compile(r'_template\.Rmd$')
