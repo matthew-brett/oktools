@@ -277,7 +277,8 @@ def grade_path(path):
     gok.print_grades(grades)
     gok.print_messages(messages)
     if any(messages.values()):
-        raise RuntimeError('One or more failures')
+        raise RuntimeError('One or more failures:\n  ' +
+                           '\n  '.join(messages.values()))
 
 
 def clean_path(path):
@@ -297,7 +298,7 @@ def proc_test_text(test_text):
     test_text = EXTRA_BLOCK_RE.sub('', test_text)
     if (re.search('begin-extra', test_text) or
         re.search('end-extra', test_text)):
-        raise ValueError('Found -extra marker in processed test')
+        raise ValueError('Found -extra marker in processed test:\n' + test_text)
     # Screening check for syntax errors.
     exec(test_text)
     return test_text
